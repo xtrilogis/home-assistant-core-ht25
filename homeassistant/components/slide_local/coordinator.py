@@ -73,8 +73,9 @@ class SlideCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Update the data from the Slide device."""
         _LOGGER.debug("Start data update")
 
+        # N: maybe clearer get and validate data e.g. assert data is dict[str, Any] -> prove dev assumptions are correct
         try:
-            data = await self.slide.slide_info(self.host)
+            data: dict[str, Any] = await self.slide.slide_info(self.host)
         except (
             ClientConnectionError,
             AuthenticationFailed,
@@ -92,6 +93,15 @@ class SlideCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 translation_key="update_error",
             )
 
+        def fill_data() -> str:
+            if oldpos is None or oldpos == data["pos"]:
+                return STATE_CLOSED if data["pos"] < DEFAULT_OFFSET else STATE_OPEN
+
+            if oldpos > data["pos"]:
+                return STATE_CLOSED if data["pos"] <= DEFAULT_OFFSET else STATE_CLOSING
+
+            return STATE_OPEN if data["pos"] >= (1 - DEFAULT_OFFSET) else STATE_OPENING
+
         if "pos" in data:
             if self.data is None:
                 oldpos = None
@@ -105,18 +115,7 @@ class SlideCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 # Value has therefore to be inverted, unless CONF_INVERT_POSITION is true
                 data["pos"] = 1 - data["pos"]
 
-            if oldpos is None or oldpos == data["pos"]:
-                data["state"] = (
-                    STATE_CLOSED if data["pos"] < DEFAULT_OFFSET else STATE_OPEN
-                )
-            elif oldpos > data["pos"]:
-                data["state"] = (
-                    STATE_CLOSED if data["pos"] <= DEFAULT_OFFSET else STATE_CLOSING
-                )
-            else:
-                data["state"] = (
-                    STATE_OPEN if data["pos"] >= (1 - DEFAULT_OFFSET) else STATE_OPENING
-                )
+            data["state"] = fill_data()
 
         _LOGGER.debug("Data successfully updated: %s", data)
 

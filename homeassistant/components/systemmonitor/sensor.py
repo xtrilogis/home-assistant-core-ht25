@@ -431,20 +431,13 @@ async def async_setup_entry(
     _LOGGER.debug("Setup from options %s", entry.options)
 
     for _type, sensor_description in SENSOR_TYPES.items():
-        # gen = (x for x in xyz if x not in a)
-
-        # for x in gen:
-        #     print(x)
         filtered_sensors = (
             sensor_argument
             for sensor_type, sensor_argument in SENSORS_WITH_ARG.items()
             if _type.startswith(sensor_type)
         )
-        for sensor_argument in filtered_sensors:
-            # SENSORS_WITH_ARG.items():  sensor_type,
-            # if not _type.startswith(sensor_type):
-            #     continue
 
+        for sensor_argument in filtered_sensors:
             filtered_resources = (
                 argument
                 for argument in startup_arguments[sensor_argument]
@@ -452,11 +445,6 @@ async def async_setup_entry(
             )
 
             for argument in filtered_resources:
-                # startup_arguments[sensor_argument]:
-                # if (_add := slugify(f"{_type}_{argument}")) in loaded_resources:
-                #     continue
-
-                # generator
                 is_enabled = check_legacy_resource(
                     f"{_type}_{argument}", legacy_resources
                 )
@@ -470,7 +458,6 @@ async def async_setup_entry(
                         is_enabled,
                     )
                 )
-            # continue
 
         if _type.startswith(SENSORS_NO_ARG):
             argument = ""
@@ -503,7 +490,6 @@ async def async_setup_entry(
                     is_enabled,
                 )
             )
-            continue
 
     # Ensure legacy imported disk_* resources are loaded if they are not part
     # of mount points automatically discovered
@@ -512,10 +498,6 @@ async def async_setup_entry(
     )
 
     for resource in filtered_legacy_resources:
-        # legacy_resources:
-        # if not resource.startswith("disk_"):
-        #     continue
-
         check_resource = slugify(resource)
         _LOGGER.debug(
             "Check resource %s already loaded in %s",
@@ -540,29 +522,6 @@ async def async_setup_entry(
                 True,
             )
         )
-
-        # if resource.startswith("disk_"):
-        #     check_resource = slugify(resource)
-        #     _LOGGER.debug(
-        #         "Check resource %s already loaded in %s",
-        #         check_resource,
-        #         loaded_resources,
-        #     )
-        #     if check_resource not in loaded_resources:
-        #         loaded_resources.add(check_resource)
-        #         split_index = resource.rfind("_")
-        #         _type = resource[:split_index]
-        #         argument = resource[split_index + 1 :]
-        #         _LOGGER.debug("Loading legacy %s with argument %s", _type, argument)
-        #         entities.append(
-        #             SystemMonitorSensor(
-        #                 coordinator,
-        #                 SENSOR_TYPES[_type],
-        #                 entry.entry_id,
-        #                 argument,
-        #                 True,
-        #             )
-        #         )
 
     @callback
     def clean_obsolete_entities() -> None:

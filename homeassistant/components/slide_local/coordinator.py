@@ -98,13 +98,29 @@ class SlideCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             return data
 
         def fill_data() -> str:
-            if oldpos is None or oldpos == data["pos"]:
-                return STATE_CLOSED if data["pos"] < DEFAULT_OFFSET else STATE_OPEN
+            # if oldpos is None or oldpos == data["pos"]:
+            #     return STATE_CLOSED if data["pos"] < DEFAULT_OFFSET else STATE_OPEN
 
-            if oldpos > data["pos"]:
-                return STATE_CLOSED if data["pos"] <= DEFAULT_OFFSET else STATE_CLOSING
+            # if oldpos > data["pos"]:
+            #     return STATE_CLOSED if data["pos"] <= DEFAULT_OFFSET else STATE_CLOSING
 
-            return STATE_OPEN if data["pos"] >= (1 - DEFAULT_OFFSET) else STATE_OPENING
+            # return STATE_OPEN if data["pos"] >= (1 - DEFAULT_OFFSET) else STATE_OPENING
+
+            if (oldpos is None or oldpos == data["pos"]) and data[
+                "pos"
+            ] < DEFAULT_OFFSET:
+                return STATE_CLOSED
+            if (oldpos is None or oldpos == data["pos"]) and data[
+                "pos"
+            ] >= DEFAULT_OFFSET:
+                return STATE_OPEN
+            if oldpos > data["pos"] and data["pos"] <= DEFAULT_OFFSET:
+                return STATE_CLOSED
+            if oldpos > data["pos"] and data["pos"] > DEFAULT_OFFSET:
+                return STATE_CLOSING
+            if oldpos < data["pos"] and data["pos"] >= (1 - DEFAULT_OFFSET):
+                return STATE_OPEN
+            return STATE_OPENING
 
         oldpos = self.data.get("pos") if self.data else None
         # if self.data is None:

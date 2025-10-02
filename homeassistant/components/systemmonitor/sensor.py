@@ -431,17 +431,35 @@ async def async_setup_entry(
     _LOGGER.debug("Setup from options %s", entry.options)
 
     for _type, sensor_description in SENSOR_TYPES.items():
-        for sensor_type, sensor_argument in SENSORS_WITH_ARG.items():
-            if not _type.startswith(sensor_type):
-                continue
+        # gen = (x for x in xyz if x not in a)
 
-            for argument in startup_arguments[sensor_argument]:
+        # for x in gen:
+        #     print(x)
+        filtered_sensors = (
+            sensor_argument
+            for sensor_type, sensor_argument in SENSORS_WITH_ARG.items()
+            if _type.startswith(sensor_type)
+        )
+        for sensor_argument in filtered_sensors:
+            # SENSORS_WITH_ARG.items():  sensor_type,
+            # if not _type.startswith(sensor_type):
+            #     continue
+
+            filtered_resources = (
+                argument
+                for argument in startup_arguments[sensor_argument]
+                if (_add := slugify(f"{_type}_{argument}")) not in loaded_resources
+            )
+
+            for argument in filtered_resources:
+                # startup_arguments[sensor_argument]:
+                # if (_add := slugify(f"{_type}_{argument}")) in loaded_resources:
+                #     continue
+
+                # generator
                 is_enabled = check_legacy_resource(
                     f"{_type}_{argument}", legacy_resources
                 )
-                if (_add := slugify(f"{_type}_{argument}")) in loaded_resources:
-                    continue
-
                 loaded_resources.add(_add)
                 entities.append(
                     SystemMonitorSensor(
@@ -489,9 +507,14 @@ async def async_setup_entry(
 
     # Ensure legacy imported disk_* resources are loaded if they are not part
     # of mount points automatically discovered
-    for resource in legacy_resources:
-        if not resource.startswith("disk_"):
-            continue
+    filtered_legacy_resources = (
+        resource for resource in legacy_resources if resource.startswith("disk_")
+    )
+
+    for resource in filtered_legacy_resources:
+        # legacy_resources:
+        # if not resource.startswith("disk_"):
+        #     continue
 
         check_resource = slugify(resource)
         _LOGGER.debug(
